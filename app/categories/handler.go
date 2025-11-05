@@ -5,17 +5,9 @@ import (
     "net/http"
     "github.com/mytheresa/go-hiring-challenge/app/api"
     "github.com/mytheresa/go-hiring-challenge/domain"
-    "github.com/mytheresa/go-hiring-challenge/models"
 )
 
-type Response struct {
-    Categories []Category `json:"categories"`
-}
-
-type Category struct {
-    Code string `json:"code"`
-    Name string `json:"name"`
-}
+// DTOs are in dto.go
 
 type Handler struct {
     repo CategoryRepo
@@ -33,12 +25,7 @@ func (h *Handler) HandleList(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    out := make([]Category, len(res))
-    for i, c := range res {
-        out[i] = Category{Code: c.Code, Name: c.Name}
-    }
-
-    api.OKResponse(w, Response{Categories: out})
+    api.OKResponse(w, toResponseDTO(res))
 }
 
 // HandleCreate creates a new category from JSON body.
@@ -48,7 +35,7 @@ func (h *Handler) HandleCreate(w http.ResponseWriter, r *http.Request) {
     dec := json.NewDecoder(r.Body)
     dec.DisallowUnknownFields()
 
-    var in Category
+    var in CategoryDTO
     if err := dec.Decode(&in); err != nil {
         api.ErrorResponse(w, http.StatusBadRequest, "invalid json")
         return
@@ -58,7 +45,7 @@ func (h *Handler) HandleCreate(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    created, err := h.repo.Create(r.Context(), models.Category{Code: in.Code, Name: in.Name})
+    created, err := h.repo.Create(r.Context(), domain.Category{Code: in.Code, Name: in.Name})
     if err != nil {
         if err == domain.ErrAlreadyExists {
             api.ErrorResponse(w, http.StatusConflict, "category already exists")
@@ -68,6 +55,6 @@ func (h *Handler) HandleCreate(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    out := Category{Code: created.Code, Name: created.Name}
+    out := toCategoryDTO(created)
     api.CreatedResponse(w, out)
 }

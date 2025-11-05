@@ -18,21 +18,7 @@ const (
     maxLimit     = 100
 )
 
-type Response struct {
-    Total    int       `json:"total"`
-    Products []Product `json:"products"`
-}
-
-type Product struct {
-    Code  string  `json:"code"`
-    Price float64 `json:"price"`
-    Category Category `json:"category"`
-}
-
-type Category struct {
-    Code string `json:"code"`
-    Name string `json:"name"`
-}
+// DTOs are now in dto.go
 
 type CatalogHandler struct {
 	repo ProductReader
@@ -92,36 +78,12 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	// Map response
-    products := make([]Product, len(res))
-    for i, p := range res {
-        products[i] = Product{
-            Code:  p.Code,
-            Price: p.Price.InexactFloat64(),
-            Category: Category{
-                Code: p.Category.Code,
-                Name: p.Category.Name,
-            },
-        }
-    }
-
-    response := Response{Total: int(total), Products: products}
-    api.OKResponse(w, response)
+    dto := toResponseDTO(res, total)
+    api.OKResponse(w, dto)
 }
 
 // ProductDetail represents a single product with variants for the detail endpoint.
-type ProductDetail struct {
-    Code     string     `json:"code"`
-    Price    float64    `json:"price"`
-    Category Category   `json:"category"`
-    Variants []Variant  `json:"variants"`
-}
-
-type Variant struct {
-    Name  string  `json:"name"`
-    SKU   string  `json:"sku"`
-    Price float64 `json:"price"`
-}
+// Product detail DTO is in dto.go
 
 // HandleGetByCode returns a single product identified by code, including its variants.
 func (h *CatalogHandler) HandleGetByCode(w http.ResponseWriter, r *http.Request) {
@@ -141,29 +103,6 @@ func (h *CatalogHandler) HandleGetByCode(w http.ResponseWriter, r *http.Request)
         return
     }
 
-    // Build variants, inheriting price when variant price is not set (treated as zero)
-    variants := make([]Variant, len(p.Variants))
-    for i, v := range p.Variants {
-        price := v.Price.InexactFloat64()
-        if price == 0 {
-            price = p.Price.InexactFloat64()
-        }
-        variants[i] = Variant{
-            Name:  v.Name,
-            SKU:   v.SKU,
-            Price: price,
-        }
-    }
-
-    resp := ProductDetail{
-        Code:  p.Code,
-        Price: p.Price.InexactFloat64(),
-        Category: Category{
-            Code: p.Category.Code,
-            Name: p.Category.Name,
-        },
-        Variants: variants,
-    }
-
+    resp := toProductDetailDTO(p)
     api.OKResponse(w, resp)
 }

@@ -8,7 +8,7 @@ import (
     "testing"
     "context"
 
-    "github.com/mytheresa/go-hiring-challenge/models"
+    "github.com/mytheresa/go-hiring-challenge/domain"
     "github.com/shopspring/decimal"
     "github.com/stretchr/testify/assert"
 )
@@ -22,25 +22,25 @@ type fakeProductRepo struct{
     gotPriceLT  *float64
 
     // outputs configured
-    products []models.Product
+    products []domain.Product
     total    int64
     retErr   error
 }
 
-func (f *fakeProductRepo) ListProducts(ctx context.Context, offset, limit int, category string, priceLT *float64) ([]models.Product, int64, error) {
+func (f *fakeProductRepo) ListProducts(ctx context.Context, offset, limit int, category string, priceLT *float64) ([]domain.Product, int64, error) {
     f.gotOffset, f.gotLimit, f.gotCategory, f.gotPriceLT = offset, limit, category, priceLT
     return f.products, f.total, f.retErr
 }
 
-func (f *fakeProductRepo) GetByCode(ctx context.Context, code string) (models.Product, bool, error) {
-    return models.Product{}, false, nil
+func (f *fakeProductRepo) GetByCode(ctx context.Context, code string) (domain.Product, bool, error) {
+    return domain.Product{}, false, nil
 }
 
 func TestHandleGet_DefaultsAndMapping(t *testing.T) {
     repo := &fakeProductRepo{
-        products: []models.Product{
-            {Code: "PROD001", Price: decimal.NewFromFloat(10.99), Category: models.Category{Code: "clothing", Name: "Clothing"}},
-            {Code: "PROD002", Price: decimal.NewFromFloat(12.49), Category: models.Category{Code: "shoes", Name: "Shoes"}},
+        products: []domain.Product{
+            {Code: "PROD001", Price: decimal.NewFromFloat(10.99), Category: domain.Category{Code: "clothing", Name: "Clothing"}},
+            {Code: "PROD002", Price: decimal.NewFromFloat(12.49), Category: domain.Category{Code: "shoes", Name: "Shoes"}},
         },
         total: 2,
     }
@@ -123,4 +123,3 @@ func TestHandleGet_RepoError(t *testing.T) {
     h.HandleGet(rec, req)
     assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
-

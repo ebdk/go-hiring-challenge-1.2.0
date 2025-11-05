@@ -6,25 +6,25 @@ import (
     "testing"
     "context"
 
-    "github.com/mytheresa/go-hiring-challenge/models"
+    "github.com/mytheresa/go-hiring-challenge/domain"
     "github.com/stretchr/testify/assert"
 )
 
 type fakeCategoryRepo struct {
-    items []models.Category
+    items []domain.Category
     err   error
 }
 
-func (f *fakeCategoryRepo) List(ctx context.Context) ([]models.Category, error) {
+func (f *fakeCategoryRepo) List(ctx context.Context) ([]domain.Category, error) {
     return f.items, f.err
 }
 
-func (f *fakeCategoryRepo) Create(ctx context.Context, c models.Category) (models.Category, error) {
+func (f *fakeCategoryRepo) Create(ctx context.Context, c domain.Category) (domain.Category, error) {
     return c, nil
 }
 
 func TestHandleList_ReturnsCategories(t *testing.T) {
-    repo := &fakeCategoryRepo{items: []models.Category{
+    repo := &fakeCategoryRepo{items: []domain.Category{
         {Code: "clothing", Name: "Clothing"},
         {Code: "shoes", Name: "Shoes"},
         {Code: "accessories", Name: "Accessories"},

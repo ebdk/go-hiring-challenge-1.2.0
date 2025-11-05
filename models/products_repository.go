@@ -3,6 +3,7 @@ package models
 import (
     "context"
     "errors"
+    "github.com/mytheresa/go-hiring-challenge/domain"
     "gorm.io/gorm"
 )
 
@@ -16,16 +17,20 @@ func NewProductsRepository(db *gorm.DB) *ProductsRepository {
 	}
 }
 
-func (r *ProductsRepository) GetAllProducts() ([]Product, error) {
+func (r *ProductsRepository) GetAllProducts() ([]domain.Product, error) {
     var products []Product
     if err := r.db.Preload("Variants").Preload("Category").Find(&products).Error; err != nil {
         return nil, err
     }
-    return products, nil
+    out := make([]domain.Product, len(products))
+    for i := range products {
+        out[i] = toDomainProduct(products[i])
+    }
+    return out, nil
 }
 
 // ListProducts returns a page of products with total count.
-func (r *ProductsRepository) ListProducts(ctx context.Context, offset, limit int, category string, priceLT *float64) ([]Product, int64, error) {
+func (r *ProductsRepository) ListProducts(ctx context.Context, offset, limit int, category string, priceLT *float64) ([]domain.Product, int64, error) {
     // Base query
     q := r.db.WithContext(ctx).Model(&Product{})
     if category != "" {
@@ -51,11 +56,15 @@ func (r *ProductsRepository) ListProducts(ctx context.Context, offset, limit int
         return nil, 0, err
     }
 
-    return products, total, nil
+    out := make([]domain.Product, len(products))
+    for i := range products {
+        out[i] = toDomainProduct(products[i])
+    }
+    return out, total, nil
 }
 
 // GetByCode fetches a single product by its code with preloaded relations.
-func (r *ProductsRepository) GetByCode(ctx context.Context, code string) (Product, bool, error) {
+func (r *ProductsRepository) GetByCode(ctx context.Context, code string) (domain.Product, bool, error) {
     var p Product
     err := r.db.WithContext(ctx).
         Preload("Variants").
@@ -63,10 +72,10 @@ func (r *ProductsRepository) GetByCode(ctx context.Context, code string) (Produc
         Where("code = ?", code).
         First(&p).Error
     if errors.Is(err, gorm.ErrRecordNotFound) {
-        return Product{}, false, nil
+        return domain.Product{}, false, nil
     }
     if err != nil {
-        return Product{}, false, err
+        return domain.Product{}, false, err
     }
-    return p, true, nil
+    return toDomainProduct(p), true, nil
 }

@@ -7,19 +7,18 @@ import (
     "testing"
     "context"
 
-    "github.com/mytheresa/go-hiring-challenge/models"
     "github.com/mytheresa/go-hiring-challenge/domain"
     "github.com/stretchr/testify/assert"
 )
 
 type fakeCategoryRepoCreate struct{
-    items []models.Category
+    items []domain.Category
     createErr error
 }
 
-func (f *fakeCategoryRepoCreate) List(ctx context.Context) ([]models.Category, error) { return f.items, nil }
-func (f *fakeCategoryRepoCreate) Create(ctx context.Context, c models.Category) (models.Category, error) {
-    if f.createErr != nil { return models.Category{}, f.createErr }
+func (f *fakeCategoryRepoCreate) List(ctx context.Context) ([]domain.Category, error) { return f.items, nil }
+func (f *fakeCategoryRepoCreate) Create(ctx context.Context, c domain.Category) (domain.Category, error) {
+    if f.createErr != nil { return domain.Category{}, f.createErr }
     return c, nil
 }
 

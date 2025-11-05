@@ -7,7 +7,7 @@ import (
     "testing"
     "time"
 
-    "github.com/mytheresa/go-hiring-challenge/models"
+    "github.com/mytheresa/go-hiring-challenge/domain"
     "github.com/shopspring/decimal"
     "github.com/stretchr/testify/assert"
     "context"
@@ -15,28 +15,28 @@ import (
 
 // fakeRepo implements ProductReader for tests
 type fakeRepo struct {
-    product models.Product
+    product domain.Product
     found   bool
 }
 
-func (f *fakeRepo) ListProducts(ctx context.Context, offset, limit int, category string, priceLT *float64) ([]models.Product, int64, error) {
+func (f *fakeRepo) ListProducts(ctx context.Context, offset, limit int, category string, priceLT *float64) ([]domain.Product, int64, error) {
     return nil, 0, nil
 }
-func (f *fakeRepo) GetByCode(ctx context.Context, code string) (models.Product, bool, error) {
+func (f *fakeRepo) GetByCode(ctx context.Context, code string) (domain.Product, bool, error) {
     if f.found && code == f.product.Code {
         return f.product, true, nil
     }
-    return models.Product{}, false, nil
+    return domain.Product{}, false, nil
 }
 
 func TestHandleGetByCode_Success(t *testing.T) {
     repo := &fakeRepo{
         found: true,
-        product: models.Product{
+        product: domain.Product{
             Code:  "PROD001",
             Price: decimal.NewFromFloat(10.99),
-            Category: models.Category{Code: "clothing", Name: "Clothing"},
-            Variants: []models.Variant{
+            Category: domain.Category{Code: "clothing", Name: "Clothing"},
+            Variants: []domain.Variant{
                 {Name: "Variant A", SKU: "SKU001A", Price: decimal.NewFromFloat(11.99)},
                 {Name: "Variant B", SKU: "SKU001B", Price: decimal.Zero}, // inherit
             },
@@ -81,4 +81,3 @@ func TestHandleGetByCode_NotFound(t *testing.T) {
 
     assert.Equal(t, http.StatusNotFound, rec.Code)
 }
-

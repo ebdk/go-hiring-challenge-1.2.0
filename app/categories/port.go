@@ -2,11 +2,11 @@ package categories
 
 import (
     "context"
-    "github.com/mytheresa/go-hiring-challenge/models"
+    "github.com/mytheresa/go-hiring-challenge/domain"
 )
 
 // CategoryRepo is the port for listing and creating categories.
 type CategoryRepo interface {
-    List(ctx context.Context) ([]models.Category, error)
-    Create(ctx context.Context, c models.Category) (models.Category, error)
+    List(ctx context.Context) ([]domain.Category, error)
+    Create(ctx context.Context, c domain.Category) (domain.Category, error)
 }

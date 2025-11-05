@@ -18,20 +18,25 @@ func NewCategoriesRepository(db *gorm.DB) *CategoriesRepository {
     return &CategoriesRepository{db: db}
 }
 
-func (r *CategoriesRepository) List(ctx context.Context) ([]Category, error) {
+func (r *CategoriesRepository) List(ctx context.Context) ([]domain.Category, error) {
     var items []Category
     if err := r.db.WithContext(ctx).Find(&items).Error; err != nil {
         return nil, err
     }
-    return items, nil
+    out := make([]domain.Category, len(items))
+    for i := range items {
+        out[i] = toDomainCategory(items[i])
+    }
+    return out, nil
 }
 
-func (r *CategoriesRepository) Create(ctx context.Context, c Category) (Category, error) {
-    if err := r.db.WithContext(ctx).Create(&c).Error; err != nil {
+func (r *CategoriesRepository) Create(ctx context.Context, c domain.Category) (domain.Category, error) {
+    mc := Category{Code: c.Code, Name: c.Name}
+    if err := r.db.WithContext(ctx).Create(&mc).Error; err != nil {
         if isUniqueViolation(err) {
-            return Category{}, domain.ErrAlreadyExists
+            return domain.Category{}, domain.ErrAlreadyExists
         }
-        return Category{}, err
+        return domain.Category{}, err
     }
     return c, nil
 }
