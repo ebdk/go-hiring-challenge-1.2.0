@@ -49,15 +49,34 @@ func main() {
     mux.HandleFunc("GET /categories", cats.HandleList)
     mux.HandleFunc("POST /categories", cats.HandleCreate)
 
-	// Set up the HTTP server
-	srv := &http.Server{
-		Addr:    fmt.Sprintf("localhost:%s", os.Getenv("HTTP_PORT")),
-		Handler: mux,
+    // logging middleware
+    type statusRecorder struct {
+        http.ResponseWriter
+        status int
+    }
+    func (r *statusRecorder) WriteHeader(code int) {
+        r.status = code
+        r.ResponseWriter.WriteHeader(code)
+    }
+    logging := func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+            start := time.Now()
+            rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+            next.ServeHTTP(rec, req)
+            dur := time.Since(start)
+            log.Printf("%s %s -> %d (%s)", req.Method, req.URL.Path, rec.status, dur)
+        })
+    }
+
+    // Set up the HTTP server
+    srv := &http.Server{
+        Addr:    fmt.Sprintf("localhost:%s", os.Getenv("HTTP_PORT")),
+        Handler: logging(mux),
         ReadTimeout:       5 * time.Second,
         ReadHeaderTimeout: 2 * time.Second,
         WriteTimeout:      10 * time.Second,
         IdleTimeout:       60 * time.Second,
-	}
+    }
 
 	// Start the server
 	go func() {

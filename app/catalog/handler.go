@@ -127,7 +127,7 @@ type Variant struct {
 func (h *CatalogHandler) HandleGetByCode(w http.ResponseWriter, r *http.Request) {
     code := r.PathValue("code")
     if code == "" {
-        api.ErrorResponse(w, http.StatusBadRequest, "missing code")
+        api.ErrorResponse(w, http.StatusUnprocessableEntity, "missing code")
         return
     }
 

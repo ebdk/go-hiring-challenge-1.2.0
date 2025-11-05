@@ -54,7 +54,7 @@ func (h *Handler) HandleCreate(w http.ResponseWriter, r *http.Request) {
         return
     }
     if in.Code == "" || in.Name == "" {
-        api.ErrorResponse(w, http.StatusBadRequest, "code and name are required")
+        api.ErrorResponse(w, http.StatusUnprocessableEntity, "code and name are required")
         return
     }
 
