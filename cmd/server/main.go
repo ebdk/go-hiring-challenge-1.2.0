@@ -8,12 +8,36 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+    "time"
 
 	"github.com/joho/godotenv"
+	"github.com/mytheresa/go-hiring-challenge/app/categories"
 	"github.com/mytheresa/go-hiring-challenge/app/catalog"
 	"github.com/mytheresa/go-hiring-challenge/app/database"
-	"github.com/mytheresa/go-hiring-challenge/models"
+	gormrepo "github.com/mytheresa/go-hiring-challenge/infra/persistence/gorm"
 )
+
+// statusRecorder wraps ResponseWriter to capture status codes.
+type statusRecorder struct {
+    http.ResponseWriter
+    status int
+}
+
+func (r *statusRecorder) WriteHeader(code int) {
+    r.status = code
+    r.ResponseWriter.WriteHeader(code)
+}
+
+// logging middleware prints method, path, status and duration.
+func logging(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+        start := time.Now()
+        rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+        next.ServeHTTP(rec, req)
+        dur := time.Since(start)
+        log.Printf("%s %s -> %d (%s)", req.Method, req.URL.Path, rec.status, dur)
+    })
+}
 
 func main() {
 	// Load environment variables from .env file
@@ -35,18 +59,27 @@ func main() {
 	defer close()
 
 	// Initialize handlers
-	prodRepo := models.NewProductsRepository(db)
+	prodRepo := gormrepo.NewProductsRepository(db)
 	cat := catalog.NewCatalogHandler(prodRepo)
+	catsRepo := gormrepo.NewCategoriesRepository(db)
+	cats := categories.NewHandler(catsRepo)
 
 	// Set up routing
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /catalog", cat.HandleGet)
+	mux.HandleFunc("GET /catalog/{code}", cat.HandleGetByCode)
+    mux.HandleFunc("GET /categories", cats.HandleList)
+    mux.HandleFunc("POST /categories", cats.HandleCreate)
 
-	// Set up the HTTP server
-	srv := &http.Server{
-		Addr:    fmt.Sprintf("localhost:%s", os.Getenv("HTTP_PORT")),
-		Handler: mux,
-	}
+    // Set up the HTTP server
+    srv := &http.Server{
+        Addr:    fmt.Sprintf("localhost:%s", os.Getenv("HTTP_PORT")),
+        Handler: logging(mux),
+        ReadTimeout:       5 * time.Second,
+        ReadHeaderTimeout: 2 * time.Second,
+        WriteTimeout:      10 * time.Second,
+        IdleTimeout:       60 * time.Second,
+    }
 
 	// Start the server
 	go func() {
@@ -63,3 +96,4 @@ func main() {
 	srv.Shutdown(ctx)
 	stop()
 }
+

@@ -1,4 +1,4 @@
-package models
+package gormrepo
 
 import (
 	"github.com/shopspring/decimal"
