@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+    "time"
 
 	"github.com/joho/godotenv"
 	"github.com/mytheresa/go-hiring-challenge/app/categories"
@@ -52,6 +53,10 @@ func main() {
 	srv := &http.Server{
 		Addr:    fmt.Sprintf("localhost:%s", os.Getenv("HTTP_PORT")),
 		Handler: mux,
+        ReadTimeout:       5 * time.Second,
+        ReadHeaderTimeout: 2 * time.Second,
+        WriteTimeout:      10 * time.Second,
+        IdleTimeout:       60 * time.Second,
 	}
 
 	// Start the server

@@ -1,10 +1,21 @@
 package catalog
 
 import (
-	"net/http"
-	"strconv"
+    "net/http"
+    "strconv"
 
-	"github.com/mytheresa/go-hiring-challenge/app/api"
+    "github.com/mytheresa/go-hiring-challenge/app/api"
+)
+
+const (
+    paramOffset   = "offset"
+    paramLimit    = "limit"
+    paramCategory = "category"
+    paramPriceLT  = "price_lt"
+
+    defaultLimit = 10
+    minLimit     = 1
+    maxLimit     = 100
 )
 
 type Response struct {
@@ -38,7 +49,7 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
     q := r.URL.Query()
     // offset
     offset := 0
-    if s := q.Get("offset"); s != "" {
+    if s := q.Get(paramOffset); s != "" {
         n, err := strconv.Atoi(s)
         if err != nil || n < 0 {
             api.ErrorResponse(w, http.StatusBadRequest, "invalid offset")
@@ -47,30 +58,30 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
         offset = n
     }
     // limit
-    limit := 10
-    if s := q.Get("limit"); s != "" {
+    limit := defaultLimit
+    if s := q.Get(paramLimit); s != "" {
         n, err := strconv.Atoi(s)
         if err != nil {
             api.ErrorResponse(w, http.StatusBadRequest, "invalid limit")
             return
         }
-        if n < 1 {
-            n = 1
+        if n < minLimit {
+            n = minLimit
         }
-        if n > 100 {
-            n = 100
+        if n > maxLimit {
+            n = maxLimit
         }
         limit = n
     }
 
     // Filters
-    category := q.Get("category")
+    category := q.Get(paramCategory)
     var priceLT *float64
-    if s := q.Get("price_lt"); s != "" {
+    if s := q.Get(paramPriceLT); s != "" {
         if v, err := strconv.ParseFloat(s, 64); err == nil {
             priceLT = &v
         } else {
-            http.Error(w, "invalid price_lt", http.StatusBadRequest)
+            api.ErrorResponse(w, http.StatusBadRequest, "invalid price_lt")
             return
         }
     }

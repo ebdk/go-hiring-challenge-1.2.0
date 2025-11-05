@@ -18,3 +18,10 @@ func ErrorResponse(w http.ResponseWriter, status int, message string) {
         Error string `json:"error"`
     }{Error: message})
 }
+
+// CreatedResponse writes a 201 response with JSON data.
+func CreatedResponse(w http.ResponseWriter, data any) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusCreated)
+    _ = json.NewEncoder(w).Encode(data)
+}

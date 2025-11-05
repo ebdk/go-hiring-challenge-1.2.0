@@ -32,3 +32,23 @@ This repository contains a Go application for managing products and their prices
   - `make docker-down`: Will stop the docker containers.
 
 Follow up for the assignemnt here: [ASSIGNMENT.md](ASSIGNMENT.md)
+
+## API Usage
+
+- Catalog list
+  - `GET /catalog?offset={int}&limit={int}&category={code}&price_lt={float}`
+  - Defaults: `offset=0`, `limit=10` (clamped 1..100)
+  - Example: `curl "http://localhost:8484/catalog?offset=0&limit=5&category=shoes&price_lt=20"`
+
+- Product details
+  - `GET /catalog/{code}`
+  - Variants without price inherit the product price.
+  - Example: `curl "http://localhost:8484/catalog/PROD001"`
+
+- Categories
+  - `GET /categories`
+    - Example: `curl "http://localhost:8484/categories"`
+  - `POST /categories`
+    - Body: `{ "code": "bags", "name": "Bags" }`
+    - 409 Conflict on duplicate code.
+    - Example: `curl -X POST -H 'Content-Type: application/json' -d '{"code":"bags","name":"Bags"}' http://localhost:8484/categories`

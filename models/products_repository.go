@@ -44,6 +44,7 @@ func (r *ProductsRepository) ListProducts(ctx context.Context, offset, limit int
     if err := q.
         Preload("Variants").
         Preload("Category").
+        Order("code ASC").
         Offset(offset).
         Limit(limit).
         Find(&products).Error; err != nil {

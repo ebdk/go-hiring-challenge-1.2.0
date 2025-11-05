@@ -43,13 +43,18 @@ func (h *Handler) HandleList(w http.ResponseWriter, r *http.Request) {
 
 // HandleCreate creates a new category from JSON body.
 func (h *Handler) HandleCreate(w http.ResponseWriter, r *http.Request) {
+    // Limit body size and reject unknown fields
+    r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
+    dec := json.NewDecoder(r.Body)
+    dec.DisallowUnknownFields()
+
     var in Category
-    if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-        http.Error(w, "invalid json", http.StatusBadRequest)
+    if err := dec.Decode(&in); err != nil {
+        api.ErrorResponse(w, http.StatusBadRequest, "invalid json")
         return
     }
     if in.Code == "" || in.Name == "" {
-        http.Error(w, "code and name are required", http.StatusBadRequest)
+        api.ErrorResponse(w, http.StatusBadRequest, "code and name are required")
         return
     }
 
@@ -64,7 +69,5 @@ func (h *Handler) HandleCreate(w http.ResponseWriter, r *http.Request) {
     }
 
     out := Category{Code: created.Code, Name: created.Name}
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusCreated)
-    _ = json.NewEncoder(w).Encode(out)
+    api.CreatedResponse(w, out)
 }
