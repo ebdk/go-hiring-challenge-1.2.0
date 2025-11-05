@@ -2,6 +2,7 @@ package models
 
 import (
     "context"
+    "errors"
     "gorm.io/gorm"
 )
 
@@ -50,4 +51,21 @@ func (r *ProductsRepository) ListProducts(ctx context.Context, offset, limit int
     }
 
     return products, total, nil
+}
+
+// GetByCode fetches a single product by its code with preloaded relations.
+func (r *ProductsRepository) GetByCode(ctx context.Context, code string) (Product, bool, error) {
+    var p Product
+    err := r.db.WithContext(ctx).
+        Preload("Variants").
+        Preload("Category").
+        Where("code = ?", code).
+        First(&p).Error
+    if errors.Is(err, gorm.ErrRecordNotFound) {
+        return Product{}, false, nil
+    }
+    if err != nil {
+        return Product{}, false, err
+    }
+    return p, true, nil
 }

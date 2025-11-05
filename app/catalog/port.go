@@ -12,4 +12,7 @@ type ProductReader interface {
     // category: optional category code filter; empty for no filter.
     // priceLT: optional price upper bound filter; nil for no filter.
     ListProducts(ctx context.Context, offset, limit int, category string, priceLT *float64) ([]models.Product, int64, error)
+    // GetByCode fetches a product by its code, including variants and category.
+    // Returns found=false when the product does not exist.
+    GetByCode(ctx context.Context, code string) (models.Product, bool, error)
 }
