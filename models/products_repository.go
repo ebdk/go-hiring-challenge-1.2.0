@@ -1,7 +1,8 @@
 package models
 
 import (
-	"gorm.io/gorm"
+    "context"
+    "gorm.io/gorm"
 )
 
 type ProductsRepository struct {
@@ -20,4 +21,24 @@ func (r *ProductsRepository) GetAllProducts() ([]Product, error) {
         return nil, err
     }
     return products, nil
+}
+
+// ListProducts returns a page of products with total count.
+func (r *ProductsRepository) ListProducts(ctx context.Context, offset, limit int) ([]Product, int64, error) {
+    var total int64
+    if err := r.db.WithContext(ctx).Model(&Product{}).Count(&total).Error; err != nil {
+        return nil, 0, err
+    }
+
+    var products []Product
+    if err := r.db.WithContext(ctx).
+        Preload("Variants").
+        Preload("Category").
+        Offset(offset).
+        Limit(limit).
+        Find(&products).Error; err != nil {
+        return nil, 0, err
+    }
+
+    return products, total, nil
 }

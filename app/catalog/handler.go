@@ -3,9 +3,11 @@ package catalog
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 type Response struct {
+    Total    int       `json:"total"`
     Products []Product `json:"products"`
 }
 
@@ -31,11 +33,40 @@ func NewCatalogHandler(r ProductReader) *CatalogHandler {
 }
 
 func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
-	res, err := h.repo.GetAllProducts()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+    // Parse pagination params
+    q := r.URL.Query()
+    // offset
+    offset := 0
+    if s := q.Get("offset"); s != "" {
+        n, err := strconv.Atoi(s)
+        if err != nil || n < 0 {
+            http.Error(w, "invalid offset", http.StatusBadRequest)
+            return
+        }
+        offset = n
+    }
+    // limit
+    limit := 10
+    if s := q.Get("limit"); s != "" {
+        n, err := strconv.Atoi(s)
+        if err != nil {
+            http.Error(w, "invalid limit", http.StatusBadRequest)
+            return
+        }
+        if n < 1 {
+            n = 1
+        }
+        if n > 100 {
+            n = 100
+        }
+        limit = n
+    }
+
+    res, total, err := h.repo.ListProducts(r.Context(), offset, limit)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
 
 	// Map response
     products := make([]Product, len(res))
@@ -53,9 +84,7 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	// Return the products as a JSON response
 	w.Header().Set("Content-Type", "application/json")
 
-	response := Response{
-		Products: products,
-	}
+    response := Response{Total: int(total), Products: products}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
