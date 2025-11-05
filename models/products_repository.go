@@ -24,14 +24,23 @@ func (r *ProductsRepository) GetAllProducts() ([]Product, error) {
 }
 
 // ListProducts returns a page of products with total count.
-func (r *ProductsRepository) ListProducts(ctx context.Context, offset, limit int) ([]Product, int64, error) {
+func (r *ProductsRepository) ListProducts(ctx context.Context, offset, limit int, category string, priceLT *float64) ([]Product, int64, error) {
+    // Base query
+    q := r.db.WithContext(ctx).Model(&Product{})
+    if category != "" {
+        q = q.Where("category_id = (SELECT id FROM categories WHERE code = ?)", category)
+    }
+    if priceLT != nil {
+        q = q.Where("price < ?", *priceLT)
+    }
+
     var total int64
-    if err := r.db.WithContext(ctx).Model(&Product{}).Count(&total).Error; err != nil {
+    if err := q.Count(&total).Error; err != nil {
         return nil, 0, err
     }
 
     var products []Product
-    if err := r.db.WithContext(ctx).
+    if err := q.
         Preload("Variants").
         Preload("Category").
         Offset(offset).

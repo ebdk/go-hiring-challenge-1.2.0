@@ -62,7 +62,19 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
         limit = n
     }
 
-    res, total, err := h.repo.ListProducts(r.Context(), offset, limit)
+    // Filters
+    category := q.Get("category")
+    var priceLT *float64
+    if s := q.Get("price_lt"); s != "" {
+        if v, err := strconv.ParseFloat(s, 64); err == nil {
+            priceLT = &v
+        } else {
+            http.Error(w, "invalid price_lt", http.StatusBadRequest)
+            return
+        }
+    }
+
+    res, total, err := h.repo.ListProducts(r.Context(), offset, limit, category, priceLT)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
