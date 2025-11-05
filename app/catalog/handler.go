@@ -3,8 +3,6 @@ package catalog
 import (
 	"encoding/json"
 	"net/http"
-
-	"github.com/mytheresa/go-hiring-challenge/models"
 )
 
 type Response struct {
@@ -17,10 +15,10 @@ type Product struct {
 }
 
 type CatalogHandler struct {
-	repo *models.ProductsRepository
+	repo ProductReader
 }
 
-func NewCatalogHandler(r *models.ProductsRepository) *CatalogHandler {
+func NewCatalogHandler(r ProductReader) *CatalogHandler {
 	return &CatalogHandler{
 		repo: r,
 	}
