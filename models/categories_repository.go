@@ -3,6 +3,7 @@ package models
 import (
     "context"
     "errors"
+    "github.com/jackc/pgconn"
     "github.com/mytheresa/go-hiring-challenge/domain"
     "gorm.io/gorm"
 )
@@ -26,6 +27,11 @@ func (r *CategoriesRepository) List(ctx context.Context) ([]Category, error) {
 func (r *CategoriesRepository) Create(ctx context.Context, c Category) (Category, error) {
     if err := r.db.WithContext(ctx).Create(&c).Error; err != nil {
         if errors.Is(err, gorm.ErrDuplicatedKey) {
+            return Category{}, domain.ErrAlreadyExists
+        }
+        // Fallback for pgx: 23505 is PostgreSQL's SQLSTATE for unique_violation
+        var pgErr *pgconn.PgError
+        if errors.As(err, &pgErr) && pgErr.Code == "23505" {
             return Category{}, domain.ErrAlreadyExists
         }
         return Category{}, err
