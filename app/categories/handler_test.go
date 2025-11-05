@@ -19,6 +19,10 @@ func (f *fakeCategoryRepo) List(ctx context.Context) ([]models.Category, error) 
     return f.items, f.err
 }
 
+func (f *fakeCategoryRepo) Create(ctx context.Context, c models.Category) (models.Category, error) {
+    return c, nil
+}
+
 func TestHandleList_ReturnsCategories(t *testing.T) {
     repo := &fakeCategoryRepo{items: []models.Category{
         {Code: "clothing", Name: "Clothing"},
@@ -37,4 +41,3 @@ func TestHandleList_ReturnsCategories(t *testing.T) {
     expected := `{"categories":[{"code":"clothing","name":"Clothing"},{"code":"shoes","name":"Shoes"},{"code":"accessories","name":"Accessories"}]}`
     assert.JSONEq(t, expected, rec.Body.String())
 }
-
