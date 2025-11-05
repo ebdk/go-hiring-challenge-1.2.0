@@ -21,3 +21,9 @@ func (r *CategoriesRepository) List(ctx context.Context) ([]Category, error) {
     return items, nil
 }
 
+func (r *CategoriesRepository) Create(ctx context.Context, c Category) (Category, error) {
+    if err := r.db.WithContext(ctx).Create(&c).Error; err != nil {
+        return Category{}, err
+    }
+    return c, nil
+}

@@ -5,8 +5,8 @@ import (
     "github.com/mytheresa/go-hiring-challenge/models"
 )
 
-// CategoryReader is the port for listing categories.
-type CategoryReader interface {
+// CategoryRepo is the port for listing and creating categories.
+type CategoryRepo interface {
     List(ctx context.Context) ([]models.Category, error)
+    Create(ctx context.Context, c models.Category) (models.Category, error)
 }
-
