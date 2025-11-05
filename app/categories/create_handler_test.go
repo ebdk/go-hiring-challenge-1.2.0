@@ -49,3 +49,14 @@ func TestHandleCreate_BadRequest(t *testing.T) {
     assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
+func TestHandleCreate_Conflict(t *testing.T) {
+    repo := &fakeCategoryRepoCreate{createErr: domain.ErrAlreadyExists}
+    h := NewHandler(repo)
+
+    body := bytes.NewBufferString(`{"code":"bags","name":"Bags"}`)
+    req := httptest.NewRequest(http.MethodPost, "/categories", body)
+    rec := httptest.NewRecorder()
+
+    h.HandleCreate(rec, req)
+    assert.Equal(t, http.StatusConflict, rec.Code)
+}

@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "net/http"
     "github.com/mytheresa/go-hiring-challenge/app/api"
+    "github.com/mytheresa/go-hiring-challenge/domain"
     "github.com/mytheresa/go-hiring-challenge/models"
 )
 
@@ -54,15 +55,16 @@ func (h *Handler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 
     created, err := h.repo.Create(r.Context(), models.Category{Code: in.Code, Name: in.Name})
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
+        if err == domain.ErrAlreadyExists {
+            api.ErrorResponse(w, http.StatusConflict, "category already exists")
+            return
+        }
+        api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
         return
     }
 
     out := Category{Code: created.Code, Name: created.Name}
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(http.StatusCreated)
-    if err := json.NewEncoder(w).Encode(out); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+    _ = json.NewEncoder(w).Encode(out)
 }

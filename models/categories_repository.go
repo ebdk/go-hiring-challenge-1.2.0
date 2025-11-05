@@ -2,6 +2,8 @@ package models
 
 import (
     "context"
+    "errors"
+    "github.com/mytheresa/go-hiring-challenge/domain"
     "gorm.io/gorm"
 )
 
@@ -23,6 +25,9 @@ func (r *CategoriesRepository) List(ctx context.Context) ([]Category, error) {
 
 func (r *CategoriesRepository) Create(ctx context.Context, c Category) (Category, error) {
     if err := r.db.WithContext(ctx).Create(&c).Error; err != nil {
+        if errors.Is(err, gorm.ErrDuplicatedKey) {
+            return Category{}, domain.ErrAlreadyExists
+        }
         return Category{}, err
     }
     return c, nil
