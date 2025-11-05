@@ -14,7 +14,7 @@ import (
 	"github.com/mytheresa/go-hiring-challenge/app/categories"
 	"github.com/mytheresa/go-hiring-challenge/app/catalog"
 	"github.com/mytheresa/go-hiring-challenge/app/database"
-	"github.com/mytheresa/go-hiring-challenge/models"
+	gormrepo "github.com/mytheresa/go-hiring-challenge/infra/persistence/gorm"
 )
 
 // statusRecorder wraps ResponseWriter to capture status codes.
@@ -59,9 +59,9 @@ func main() {
 	defer close()
 
 	// Initialize handlers
-	prodRepo := models.NewProductsRepository(db)
+	prodRepo := gormrepo.NewProductsRepository(db)
 	cat := catalog.NewCatalogHandler(prodRepo)
-	catsRepo := models.NewCategoriesRepository(db)
+	catsRepo := gormrepo.NewCategoriesRepository(db)
 	cats := categories.NewHandler(catsRepo)
 
 	// Set up routing
@@ -96,3 +96,4 @@ func main() {
 	srv.Shutdown(ctx)
 	stop()
 }
+
