@@ -21,13 +21,19 @@ const (
 // DTOs are now in dto.go
 
 type CatalogHandler struct {
-	repo ProductReader
+    listUC ListCatalog
+    getUC  GetProduct
 }
 
+// NewCatalogHandlerWithUseCases injects explicit use cases.
+func NewCatalogHandlerWithUseCases(listUC ListCatalog, getUC GetProduct) *CatalogHandler {
+    return &CatalogHandler{listUC: listUC, getUC: getUC}
+}
+
+// NewCatalogHandler wires default use cases from the provided repository.
 func NewCatalogHandler(r ProductReader) *CatalogHandler {
-	return &CatalogHandler{
-		repo: r,
-	}
+    uc := NewUseCase(r, PaginationPolicy{DefaultLimit: defaultLimit, MinLimit: minLimit, MaxLimit: maxLimit})
+    return NewCatalogHandlerWithUseCases(&listAdapter{uc: uc}, &getAdapter{uc: uc})
 }
 
 func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +78,7 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-    res, total, err := h.repo.ListProducts(r.Context(), offset, limit, category, priceLT)
+    res, total, err := h.listUC.Execute(r.Context(), ListCatalogQuery{Offset: offset, Limit: limit, Category: category, PriceLT: priceLT})
     if err != nil {
         api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
         return
@@ -93,7 +99,7 @@ func (h *CatalogHandler) HandleGetByCode(w http.ResponseWriter, r *http.Request)
         return
     }
 
-    p, found, err := h.repo.GetByCode(r.Context(), code)
+    p, found, err := h.getUC.Execute(r.Context(), code)
     if err != nil {
         api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
         return

@@ -16,4 +16,3 @@ func (u *CreateCategoryUseCase) Execute(ctx context.Context, c domain.Category) 
     }
     return u.Repo.Create(ctx, c)
 }
-

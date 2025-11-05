@@ -13,4 +13,3 @@ type ListCategoriesUseCase struct {
 func (u *ListCategoriesUseCase) Execute(ctx context.Context) ([]domain.Category, error) {
     return u.Repo.List(ctx)
 }
-

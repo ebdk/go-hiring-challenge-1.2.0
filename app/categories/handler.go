@@ -10,17 +10,23 @@ import (
 // DTOs are in dto.go
 
 type Handler struct {
-    repo CategoryRepo
+    listUC   ListCategories
+    createUC CreateCategory
 }
 
+// NewHandlerWithUseCases injects explicit use cases (preferred for tests and composition).
+func NewHandlerWithUseCases(listUC ListCategories, createUC CreateCategory) *Handler {
+    return &Handler{listUC: listUC, createUC: createUC}
+}
+
+// NewHandler keeps backward compatibility by wiring default use cases from the repo.
 func NewHandler(r CategoryRepo) *Handler {
-    return &Handler{repo: r}
+    return NewHandlerWithUseCases(&ListCategoriesUseCase{Repo: r}, &CreateCategoryUseCase{Repo: r})
 }
 
 // HandleList returns all categories.
 func (h *Handler) HandleList(w http.ResponseWriter, r *http.Request) {
-    uc := &ListCategoriesUseCase{Repo: h.repo}
-    res, err := uc.Execute(r.Context())
+    res, err := h.listUC.Execute(r.Context())
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
@@ -41,8 +47,7 @@ func (h *Handler) HandleCreate(w http.ResponseWriter, r *http.Request) {
         api.ErrorResponse(w, http.StatusBadRequest, "invalid json")
         return
     }
-    uc := &CreateCategoryUseCase{Repo: h.repo}
-    created, err := uc.Execute(r.Context(), domain.Category{Code: in.Code, Name: in.Name})
+    created, err := h.createUC.Execute(r.Context(), domain.Category{Code: in.Code, Name: in.Name})
     if err != nil {
         if err == domain.ErrInvalid {
             api.ErrorResponse(w, http.StatusUnprocessableEntity, "code and name are required")
