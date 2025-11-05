@@ -19,7 +19,8 @@ func NewHandler(r CategoryRepo) *Handler {
 
 // HandleList returns all categories.
 func (h *Handler) HandleList(w http.ResponseWriter, r *http.Request) {
-    res, err := h.repo.List(r.Context())
+    uc := &ListCategoriesUseCase{Repo: h.repo}
+    res, err := uc.Execute(r.Context())
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
@@ -40,13 +41,13 @@ func (h *Handler) HandleCreate(w http.ResponseWriter, r *http.Request) {
         api.ErrorResponse(w, http.StatusBadRequest, "invalid json")
         return
     }
-    if in.Code == "" || in.Name == "" {
-        api.ErrorResponse(w, http.StatusUnprocessableEntity, "code and name are required")
-        return
-    }
-
-    created, err := h.repo.Create(r.Context(), domain.Category{Code: in.Code, Name: in.Name})
+    uc := &CreateCategoryUseCase{Repo: h.repo}
+    created, err := uc.Execute(r.Context(), domain.Category{Code: in.Code, Name: in.Name})
     if err != nil {
+        if err == domain.ErrInvalid {
+            api.ErrorResponse(w, http.StatusUnprocessableEntity, "code and name are required")
+            return
+        }
         if err == domain.ErrAlreadyExists {
             api.ErrorResponse(w, http.StatusConflict, "category already exists")
             return
