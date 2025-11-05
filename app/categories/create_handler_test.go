@@ -8,6 +8,7 @@ import (
     "context"
 
     "github.com/mytheresa/go-hiring-challenge/models"
+    "github.com/mytheresa/go-hiring-challenge/domain"
     "github.com/stretchr/testify/assert"
 )
 
