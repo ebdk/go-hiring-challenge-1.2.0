@@ -1,12 +1,8 @@
 package categories
 
 import (
-    "context"
-    "github.com/mytheresa/go-hiring-challenge/domain"
+    ports "github.com/mytheresa/go-hiring-challenge/domain/ports"
 )
 
-// CategoryRepo is the port for listing and creating categories.
-type CategoryRepo interface {
-    List(ctx context.Context) ([]domain.Category, error)
-    Create(ctx context.Context, c domain.Category) (domain.Category, error)
-}
+// CategoryRepo aliases the domain output port; kept local for app wiring convenience.
+type CategoryRepo = ports.CategoryRepository
