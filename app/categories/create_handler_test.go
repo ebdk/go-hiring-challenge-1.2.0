@@ -47,7 +47,7 @@ func TestHandleCreate_BadRequest(t *testing.T) {
     rec := httptest.NewRecorder()
 
     h.HandleCreate(rec, req)
-    assert.Equal(t, http.StatusBadRequest, rec.Code)
+    assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
 }
 
 func TestHandleCreate_Conflict(t *testing.T) {

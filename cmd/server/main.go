@@ -17,6 +17,28 @@ import (
 	"github.com/mytheresa/go-hiring-challenge/models"
 )
 
+// statusRecorder wraps ResponseWriter to capture status codes.
+type statusRecorder struct {
+    http.ResponseWriter
+    status int
+}
+
+func (r *statusRecorder) WriteHeader(code int) {
+    r.status = code
+    r.ResponseWriter.WriteHeader(code)
+}
+
+// logging middleware prints method, path, status and duration.
+func logging(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+        start := time.Now()
+        rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+        next.ServeHTTP(rec, req)
+        dur := time.Since(start)
+        log.Printf("%s %s -> %d (%s)", req.Method, req.URL.Path, rec.status, dur)
+    })
+}
+
 func main() {
 	// Load environment variables from .env file
 	if err := godotenv.Load(".env"); err != nil {
@@ -48,25 +70,6 @@ func main() {
 	mux.HandleFunc("GET /catalog/{code}", cat.HandleGetByCode)
     mux.HandleFunc("GET /categories", cats.HandleList)
     mux.HandleFunc("POST /categories", cats.HandleCreate)
-
-    // logging middleware
-    type statusRecorder struct {
-        http.ResponseWriter
-        status int
-    }
-    func (r *statusRecorder) WriteHeader(code int) {
-        r.status = code
-        r.ResponseWriter.WriteHeader(code)
-    }
-    logging := func(next http.Handler) http.Handler {
-        return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-            start := time.Now()
-            rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
-            next.ServeHTTP(rec, req)
-            dur := time.Since(start)
-            log.Printf("%s %s -> %d (%s)", req.Method, req.URL.Path, rec.status, dur)
-        })
-    }
 
     // Set up the HTTP server
     srv := &http.Server{
