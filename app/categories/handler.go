@@ -3,6 +3,7 @@ package categories
 import (
     "encoding/json"
     "net/http"
+    "github.com/mytheresa/go-hiring-challenge/app/api"
     "github.com/mytheresa/go-hiring-challenge/models"
 )
 
@@ -36,11 +37,7 @@ func (h *Handler) HandleList(w http.ResponseWriter, r *http.Request) {
         out[i] = Category{Code: c.Code, Name: c.Name}
     }
 
-    w.Header().Set("Content-Type", "application/json")
-    if err := json.NewEncoder(w).Encode(Response{Categories: out}); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+    api.OKResponse(w, Response{Categories: out})
 }
 
 // HandleCreate creates a new category from JSON body.

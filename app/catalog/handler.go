@@ -1,9 +1,10 @@
 package catalog
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
+
+	"github.com/mytheresa/go-hiring-challenge/app/api"
 )
 
 type Response struct {
@@ -40,7 +41,7 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
     if s := q.Get("offset"); s != "" {
         n, err := strconv.Atoi(s)
         if err != nil || n < 0 {
-            http.Error(w, "invalid offset", http.StatusBadRequest)
+            api.ErrorResponse(w, http.StatusBadRequest, "invalid offset")
             return
         }
         offset = n
@@ -50,7 +51,7 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
     if s := q.Get("limit"); s != "" {
         n, err := strconv.Atoi(s)
         if err != nil {
-            http.Error(w, "invalid limit", http.StatusBadRequest)
+            api.ErrorResponse(w, http.StatusBadRequest, "invalid limit")
             return
         }
         if n < 1 {
@@ -76,7 +77,7 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 
     res, total, err := h.repo.ListProducts(r.Context(), offset, limit, category, priceLT)
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
+        api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
         return
     }
 
@@ -93,15 +94,8 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-	// Return the products as a JSON response
-	w.Header().Set("Content-Type", "application/json")
-
     response := Response{Total: int(total), Products: products}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+    api.OKResponse(w, response)
 }
 
 // ProductDetail represents a single product with variants for the detail endpoint.
@@ -122,17 +116,17 @@ type Variant struct {
 func (h *CatalogHandler) HandleGetByCode(w http.ResponseWriter, r *http.Request) {
     code := r.PathValue("code")
     if code == "" {
-        http.Error(w, "missing code", http.StatusBadRequest)
+        api.ErrorResponse(w, http.StatusBadRequest, "missing code")
         return
     }
 
     p, found, err := h.repo.GetByCode(r.Context(), code)
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
+        api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
         return
     }
     if !found {
-        http.Error(w, "not found", http.StatusNotFound)
+        api.ErrorResponse(w, http.StatusNotFound, "not found")
         return
     }
 
@@ -160,9 +154,5 @@ func (h *CatalogHandler) HandleGetByCode(w http.ResponseWriter, r *http.Request)
         Variants: variants,
     }
 
-    w.Header().Set("Content-Type", "application/json")
-    if err := json.NewEncoder(w).Encode(resp); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+    api.OKResponse(w, resp)
 }
